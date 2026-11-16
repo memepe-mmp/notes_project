@@ -1,11 +1,23 @@
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import  NoteForm
-from .models import Note
+from .models import Note, Category
 
 def index(request):
     notes = Note.objects.all()
-    return render(request, "notes/note_list.html", {"notes": notes})
+    if request.GET.get("category"):
+        notes = notes.filter(category_id=request.GET["category"])
+    if request.GET.get("active"):
+        notes = notes.filter(is_done=False)
+    if request.GET.get("q"):
+        notes = notes.filter(title_icontains=request.GET["q"])
+
+    total = len(notes)
+    notes = notes[:300]
+    categories = Category.objects.all()
+    return render(request, "notes/note_list.html", {
+        "notes": notes, "total": total, "categories": categories,
+    })
 
 def note_create(request):
     if request.method == "POST":
