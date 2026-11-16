@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 from django.conf.global_settings import DATABASES, SESSION_COOKIE_SECURE, CSRF_COOKIE_SECURE, SECURE_PROXY_SSL_HEADER, \
-    CSRF_TRUSTED_ORIGINS
+    CSRF_TRUSTED_ORIGINS, INTERNAL_IPS
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -142,3 +142,19 @@ if not DEBUG:
     CSRF_TRUSTED_ORIGINS = [f"https://" for h in ALLOWED_HOSTS if h]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+if DEBUG:
+    INSTALLED_APPS += ["debug_toolbar"]
+    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
+    INTERNAL_IPS = ["127.0.0.1"]
+
+LOGGING = {
+    "version": 1,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": os.environ.get("SQL_LOG_LEVEL", "WARNING"),
+        },
+    },
+}
