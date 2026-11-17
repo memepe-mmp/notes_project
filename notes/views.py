@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404, redirect, render
+from django.db.models import Count
 
 from .forms import  NoteForm
 from .models import Note, Category
 
 def index(request):
-    notes = Note.objects.all()
+    notes = Note.objects.select_related("category", "owner").prefetch_related("tags")
     if request.GET.get("category"):
         notes = notes.filter(category_id=request.GET["category"])
     if request.GET.get("active"):
@@ -12,9 +13,9 @@ def index(request):
     if request.GET.get("q"):
         notes = notes.filter(title_icontains=request.GET["q"])
 
-    total = len(notes)
+    total = notes.count()
     notes = notes[:300]
-    categories = Category.objects.all()
+    categories = Category.objects.annotate(notes_count=Count("notes")).order_by("name")
     return render(request, "notes/note_list.html", {
         "notes": notes, "total": total, "categories": categories,
     })
