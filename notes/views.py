@@ -11,7 +11,7 @@ def index(request):
     if request.GET.get("active"):
         notes = notes.filter(is_done=False)
     if request.GET.get("q"):
-        notes = notes.filter(title_icontains=request.GET["q"])
+        notes = notes.filter(title__icontains=request.GET["q"])
 
     total = notes.count()
     notes = notes[:300]
