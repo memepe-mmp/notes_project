@@ -7,6 +7,9 @@ from faker import Faker
 from unicodedata import category
 
 from notes.models import Category, Note, Tag
+from notes.services import CATEGORIES_KEY
+from django.core.cache import cache
+
 
 class Command(BaseCommand):
     help = 'Заполняет базу тестовыми заметками'
@@ -50,3 +53,4 @@ class Command(BaseCommand):
                 for tag in random.sample(tags, 3)
             ])
             self.stdout.write(f"Создано {start + size} из {total}")
+        cache.delete(CATEGORIES_KEY)

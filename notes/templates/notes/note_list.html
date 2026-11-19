@@ -1,4 +1,5 @@
 {% extends "notes/base.html" %}
+{% load cache %}
 
 {% block content %}
     <form method="get">
@@ -17,16 +18,18 @@
     <a class="btn" href="{% url 'notes:create' %}">+ Новая заметка</a>
 
     {% for note in page %}
-        <article class="note {% if note.is_done %}done{% endif %}">
-            <h2>{{ note.title }}</h2>
-            <p>{{ note.text|truncatechars:150 }}</p>
-            <small>
-                {{ note.category.name }} . {{ note.owner.username }} .
-                {% for tag in note.tags.all %}#{{ tag.name }} {% endfor %}
-            </small>
-            <a href="{% url 'notes:update' note.pk %}">Изменить</a>
-            <a href="{% url 'notes:delete' note.pk %}">Удалить</a>
-        </article>
+        {% cache 3600 note_card note.pk note.updated_at %}
+            <article class="note {% if note.is_done %}done{% endif %}">
+                <h2>{{ note.title }}</h2>
+                <p>{{ note.text|truncatechars:150 }}</p>
+                <small>
+                    {{ note.category.name }} . {{ note.owner.username }} .
+                    {% for tag in note.tags.all %}#{{ tag.name }} {% endfor %}
+                </small>
+                <a href="{% url 'notes:update' note.pk %}">Изменить</a>
+                <a href="{% url 'notes:delete' note.pk %}">Удалить</a>
+            </article>
+        {% endcache %}
     {% endfor %}
 
     <nav>

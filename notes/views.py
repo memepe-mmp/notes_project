@@ -6,6 +6,7 @@ from django.db.models import Q
 
 from .forms import  NoteForm
 from .models import Note, Category
+from .services import get_categories_with_counts
 
 PAGE_SIZE = 20
 
@@ -20,7 +21,7 @@ def index(request):
 
     paginator = Paginator(notes,20)
     page = paginator.get_page(request.GET.get("page"))
-    categories = Category.objects.annotate(notes_count=Count("notes")).order_by("name")
+    categories = get_categories_with_counts()
     return render(request, "notes/note_list.html", {
         "page": page, "categories": categories,
     })
