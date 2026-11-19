@@ -1,8 +1,13 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db.models import Count
+from django.core.paginator import Paginator
+from unicodedata import category
+from django.db.models import Q
 
 from .forms import  NoteForm
 from .models import Note, Category
+
+PAGE_SIZE = 20
 
 def index(request):
     notes = Note.objects.select_related("category", "owner").prefetch_related("tags")
@@ -13,11 +18,11 @@ def index(request):
     if request.GET.get("q"):
         notes = notes.filter(title__icontains=request.GET["q"])
 
-    total = notes.count()
-    notes = notes[:300]
+    paginator = Paginator(notes,20)
+    page = paginator.get_page(request.GET.get("page"))
     categories = Category.objects.annotate(notes_count=Count("notes")).order_by("name")
     return render(request, "notes/note_list.html", {
-        "notes": notes, "total": total, "categories": categories,
+        "page": page, "categories": categories,
     })
 
 def note_create(request):
@@ -47,3 +52,20 @@ def note_delete(request, pk):
         note.delete()
         return redirect("notes:index")
     return render(request, "notes/note_confirm_delete.html", {"note": note})
+
+def feed(request):
+    notes = Note.objects.select_related("category", "owner").prefetch_related("tags")
+    after = request.GET.get("after")
+    if after:
+        last = Note.objects.only("created_at").get(pk=after)
+        notes = notes.filter(
+            Q(created_at__lt=last.created_at)
+            | Q(created_at=last.created_at, id__lt=last.pk)
+        )
+    notes = list(notes[:PAGE_SIZE + 1])
+    has_next = len(notes) > PAGE_SIZE
+    notes = notes[:PAGE_SIZE]
+    return render(request, "notes/note_feed.html", {
+        "notes": notes,
+        "next_after": notes[-1].pk if has_next else None,
+    })

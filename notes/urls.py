@@ -8,4 +8,5 @@ urlpatterns = [
     path("new/", views.note_create, name="create"),
     path("<int:pk>/edit/", views.note_update, name="update"),
     path("<int:pk>/delete/", views.note_delete, name="delete"),
+    path("feed/", views.feed, name="feed"),
 ]
