@@ -3,10 +3,12 @@ from django.db.models import Count
 from django.core.paginator import Paginator
 from unicodedata import category
 from django.db.models import Q
+from django.db import transaction
+from .tasks import notify_note_created
 
 from .forms import  NoteForm
 from .models import Note, Category
-from .services import get_categories_with_counts
+from .services import get_categories_with_counts, notify_external_service
 
 PAGE_SIZE = 20
 
@@ -30,7 +32,8 @@ def note_create(request):
     if request.method == "POST":
         form = NoteForm(request.POST)
         if form.is_valid():
-            form.save()
+            note = form.save()
+            transaction.on_commit(lambda: notify_note_created.delay(note.pk))
             return redirect("notes:index")
     else:
         form = NoteForm()
